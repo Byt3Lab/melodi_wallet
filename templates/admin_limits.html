@@ -1,0 +1,105 @@
+<div class="container-fluid py-3">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <a href="/admin/melodi_wallet" class="btn btn-sm btn-outline-secondary me-2">{{ t('melodi_wallet.larr_retour', '&larr; Retour') }}</a>
+      <h4 class="fw-bold mb-1 d-inline-block">{{ t('melodi_wallet.plafonds_limites_financieres_par', 'Plafonds & Limites Financières par Pays') }}</h4>
+      <p class="text-muted small mb-0">{{ t('melodi_wallet.configuration_des_regles_de', 'Configuration des règles de gestion des portefeuilles, limites quotidiennes et soldes maximaux') }}</p>
+    </div>
+    <button class="btn btn-dark btn-sm shadow-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#editLimitModal">
+      <img src="/static_base_icons?name=tune&fill=white" style="width: 16px; height: 16px;"> {{ t('melodi_wallet.modifier_un_plafond', 'Modifier un Plafond') }}
+    </button>
+  </div>
+
+  <!-- Limits Grid -->
+  <div class="row g-4">
+    {% for l in limits %}
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+          <span class="badge bg-dark font-monospace fs-6">{{ l.country_code }}</span>
+          <small class="text-muted">{{ t('melodi_wallet.regles_nationales', 'Règles Nationales') }}</small>
+        </div>
+        <div class="card-body pt-2 pb-3">
+          <ul class="list-group list-group-flush x-small">
+            <li class="list-group-item d-flex justify-content-between px-0 py-2">
+              <span class="text-muted">{{ t('melodi_wallet.max_portefeuilles_utilisateur', 'Max Portefeuilles / Utilisateur') }}</span>
+              <span class="fw-bold font-monospace">{{ l.max_wallets_per_user }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between px-0 py-2">
+              <span class="text-muted">{{ t('melodi_wallet.limite_quotidienne_transfert', 'Limite Quotidienne Transfert') }}</span>
+              <span class="fw-bold font-monospace text-primary">{{ "%.2f"|format(l.daily_transfer_limit) }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between px-0 py-2">
+              <span class="text-muted">{{ t('melodi_wallet.limite_quotidienne_retrait', 'Limite Quotidienne Retrait') }}</span>
+              <span class="fw-bold font-monospace text-warning-emphasis">{{ "%.2f"|format(l.daily_withdrawal_limit) }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between px-0 py-2">
+              <span class="text-muted">{{ t('melodi_wallet.limite_quotidienne_paiement', 'Limite Quotidienne Paiement') }}</span>
+              <span class="fw-bold font-monospace text-info-emphasis">{{ "%.2f"|format(l.daily_payment_limit) }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between px-0 py-2">
+              <span class="text-muted">{{ t('melodi_wallet.solde_maximal_autorise', 'Solde Maximal Autorisé') }}</span>
+              <span class="fw-bold font-monospace text-success">{{ "%.2f"|format(l.max_balance) }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-3 text-center py-5 text-muted">
+        <img src="/static_base_icons?name=tune" style="width: 48px; height: 48px;" class="d-block mx-auto mb-2 opacity-50">
+        <p class="mb-0">{{ t('melodi_wallet.aucun_plafond_specifique_configure', 'Aucun plafond spécifique configuré. Cliquez sur le bouton ci-dessus pour définir les règles par pays.') }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal Modifier Limite -->
+<div class="modal fade" id="editLimitModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow">
+      <form method="POST" action="/admin/melodi_wallet/limits">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">{{ t('melodi_wallet.configurer_les_plafonds_d', 'Configurer les Plafonds d\'un Pays') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.code_pays_iso_2', 'Code Pays (ISO-2)') }}</label>
+            <select name="country_code" class="form-select form-select-sm" required>
+              {% for code, curr in countries.items() %}
+              <option value="{{ code }}">{{ code }} (Devise: {{ curr }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.nombre_max_de_portefeuilles', 'Nombre Max de Portefeuilles par Utilisateur') }}</label>
+            <input type="number" name="max_wallets_per_user" class="form-control form-control-sm" value="3" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.limite_quotidienne_de_transfert', 'Limite Quotidienne de Transfert') }}</label>
+            <input type="number" step="0.01" name="daily_transfer_limit" class="form-control form-control-sm" value="500000.00" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.limite_quotidienne_de_retrait', 'Limite Quotidienne de Retrait') }}</label>
+            <input type="number" step="0.01" name="daily_withdrawal_limit" class="form-control form-control-sm" value="300000.00" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.limite_quotidienne_de_paiement', 'Limite Quotidienne de Paiement Facture') }}</label>
+            <input type="number" step="0.01" name="daily_payment_limit" class="form-control form-control-sm" value="1000000.00" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.solde_maximal_autorise_plafond', 'Solde Maximal Autorisé (Plafond Portefeuille)') }}</label>
+            <input type="number" step="0.01" name="max_balance" class="form-control form-control-sm" value="5000000.00" required>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">{{ t('melodi_wallet.annuler', 'Annuler') }}</button>
+          <button type="submit" class="btn btn-dark btn-sm">{{ t('melodi_wallet.enregistrer_les_plafonds', 'Enregistrer les Plafonds') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

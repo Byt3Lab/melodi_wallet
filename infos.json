@@ -1,0 +1,10 @@
+{
+    "version": "0.1.0",
+    "name": "melodi_wallet",
+    "title": "MELODI Wallet",
+    "description": "Gestion des portefeuilles numériques, ledger transactionnel et paiements.",
+    "depends": [
+        "melodi_treasury",
+        "melodi_invoicing"
+    ]
+}

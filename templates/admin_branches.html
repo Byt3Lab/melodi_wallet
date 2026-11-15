@@ -1,0 +1,106 @@
+<div class="container-fluid py-3">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="/admin/melodi_wallet" class="btn btn-sm btn-outline-secondary me-2">{{ t('melodi_wallet.larr_portefeuilles', '&larr; Portefeuilles') }}</a>
+        <h4 class="fw-bold mb-0">{{ t('melodi_wallet.agences_autorisees_a_heberger', 'Agences Autorisées à Héberger des Portefeuilles') }}</h4>
+      </div>
+      <p class="text-muted small mb-0 mt-1">{{ t('melodi_wallet.configuration_des_agences_habilitees', 'Configuration des agences habilitées et limite de comptes portefeuilles par utilisateur (défaut: 1)') }}</p>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-0 pt-3 pb-2">
+      <h6 class="fw-bold mb-0">{{ t('melodi_wallet.liste_des_agences_de', 'Liste des Agences de la Base de Données') }}</h6>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 text-sm">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">{{ t('melodi_wallet.code_agence', 'Code & Agence') }}</th>
+              <th>{{ t('melodi_wallet.devise_de_l_agence', 'Devise de l\'Agence') }}</th>
+              <th>{{ t('melodi_wallet.pays_region', 'Pays / Région') }}</th>
+              <th>{{ t('melodi_wallet.hebergement_wallet', 'Hébergement Wallet') }}</th>
+              <th>{{ t('melodi_wallet.max_portefeuilles_user', 'Max Portefeuilles / User') }}</th>
+              <th class="pe-3 text-end">{{ t('melodi_wallet.action', 'Action') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in branches %}
+            <tr>
+              <td class="ps-3">
+                <span class="fw-bold text-dark d-block">{{ b.name }}</span>
+                <small class="text-muted font-monospace">ID: {{ b.branch_id }} {% if b.code %}({{ b.code }}){% endif %}</small>
+              </td>
+              <td>
+                <span class="badge bg-dark font-monospace">{{ b.currency_code }}</span>
+              </td>
+              <td>
+                <small class="text-muted">{{ b.country or 'Non renseigné' }}</small>
+              </td>
+              <td>
+                {% if b.is_enabled %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check-circle me-1"></i> {{ t('melodi_wallet.autorise', 'Autorisé') }}</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-ban me-1"></i> {{ t('melodi_wallet.desactive', 'Désactivé') }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="fw-bold font-monospace">{{ b.max_wallets_per_user }}</span> {{ t('melodi_wallet.compte_s_max', 'compte(s) max') }}
+              </td>
+              <td class="pe-3 text-end">
+                <button class="btn btn-xs btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBranchModal{{ loop.index }}">
+                  <i class="fas fa-cog me-1"></i> {{ t('melodi_wallet.configurer', 'Configurer') }}
+                </button>
+              </td>
+            </tr>
+
+            <!-- Modal Configuration Agence -->
+            <div class="modal fade" id="editBranchModal{{ loop.index }}" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content border-0 shadow">
+                  <form method="POST" action="/admin/melodi_wallet/branches">
+                    <input type="hidden" name="branch_id" value="{{ b.branch_id }}">
+                    <div class="modal-header border-0 pb-0">
+                      <h5 class="modal-title fw-bold">Configuration Agence - {{ b.name }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-start">
+                      <div class="alert alert-info py-2 px-3 small mb-3">
+                        {{ t('melodi_wallet.devise_officielle_de_l', 'Devise officielle de l\'agence :') }} <strong class="font-monospace">{{ b.currency_code }}</strong>{{ t('melodi_wallet.tout_portefeuille_cree_dans', '. 
+                        Tout portefeuille créé dans cette agence utilisera automatiquement cette devise.') }}
+                      </div>
+                      
+                      <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="is_enabled" id="is_enabled_{{ loop.index }}" {% if b.is_enabled %}checked{% endif %}>
+                        <label class="form-check-label fw-bold small" for="is_enabled_{{ loop.index }}">
+                          {{ t('melodi_wallet.autoriser_l_hebergement_de', 'Autoriser l\'hébergement de comptes portefeuilles') }}
+                        </label>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label small fw-bold">{{ t('melodi_wallet.nombre_maximal_de_portefeuilles', 'Nombre Maximal de Portefeuilles par Utilisateur') }}</label>
+                        <input type="number" min="1" max="10" name="max_wallets_per_user" class="form-control form-control-sm" value="{{ b.max_wallets_per_user }}" required>
+                        <div class="form-text x-small">{{ t('melodi_wallet.par_defaut_un_utilisateur', 'Par défaut, un utilisateur ne peut créer qu\'un seul (1) compte dans cette agence.') }}</div>
+                      </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                      <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">{{ t('melodi_wallet.annuler', 'Annuler') }}</button>
+                      <button type="submit" class="btn btn-primary btn-sm px-3">{{ t('melodi_wallet.enregistrer', 'Enregistrer') }}</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">{{ t('melodi_wallet.aucune_agence_trouvee_en', 'Aucune agence trouvée en base de données.') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

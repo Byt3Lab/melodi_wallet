@@ -1,0 +1,300 @@
+<div class="container-fluid py-3">
+  <!-- Header Title -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="/admin/melodi_wallet" class="btn btn-sm btn-outline-secondary me-2">{{ t('melodi_wallet.larr_retour_aux_portefeuilles', '&larr; Retour aux Portefeuilles') }}</a>
+        <h4 class="fw-bold mb-0">{{ t('melodi_wallet.grand_livre', 'Grand Livre') }} - {{ wallet.name }}</h4>
+        <span class="badge bg-dark font-monospace">{{ wallet.currency_code }}</span>
+        {% set wst = wallet.status.value if wallet.status.value is defined else wallet.status|string %}
+        {% if wst == 'active' %}
+          <span class="badge bg-success-subtle text-success border border-success-subtle uppercase">{{ t('melodi_wallet.actif', 'Actif') }}</span>
+        {% elif wst == 'suspended' %}
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle uppercase">{{ t('melodi_wallet.suspendu', 'Suspendu') }}</span>
+        {% else %}
+          <span class="badge bg-secondary-subtle text-secondary uppercase">{{ wst }}</span>
+        {% endif %}
+      </div>
+      <p class="text-muted small mb-0 mt-1">{{ t('melodi_wallet.audit_transactionnel_desc', 'Audit transactionnel et gestion complète du portefeuille') }} #{{ wallet.id }}</p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <div class="text-end">
+        <span class="text-muted x-small uppercase fw-bold">{{ t('melodi_wallet.solde_disponible', 'Solde Disponible') }}</span>
+        <h3 class="fw-bold mb-0 text-success font-monospace">{{ "%.2f"|format(wallet.available_balance) }} {{ wallet.currency_code }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Owner & Wallet Info Card -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-7">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-body h-100">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+            <i class="fas fa-user-circle text-primary"></i> {{ t('melodi_wallet.titulaire_client_du_portefeuille', 'Titulaire / Client du Portefeuille') }}
+          </h6>
+          {% if wallet.is_default %}
+            <span class="badge bg-warning text-dark"><i class="fas fa-star me-1"></i> {{ t('melodi_wallet.portefeuille_par_defaut', 'Portefeuille par défaut') }}</span>
+          {% endif %}
+        </div>
+        <div class="row g-2 mt-1 text-sm">
+          <div class="col-md-6">
+            <span class="text-muted d-block x-small">{{ t('melodi_wallet.nom_raison_sociale', 'Nom / Raison Sociale :') }}</span>
+            <span class="fw-bold text-dark">{{ owner_info.name if owner_info else wallet.user_id }}</span>
+          </div>
+          <div class="col-md-6">
+            <span class="text-muted d-block x-small">{{ t('melodi_wallet.identifiant_systeme_user_id', 'Identifiant Système (User ID) :') }}</span>
+            <span class="font-monospace fw-semibold text-secondary">#{{ wallet.user_id }}</span>
+          </div>
+          <div class="col-md-6 mt-2">
+            <span class="text-muted d-block x-small">{{ t('melodi_wallet.adresse_email', 'Adresse Email :') }}</span>
+            <span class="text-dark">{{ owner_info.email if (owner_info and owner_info.email) else t('melodi_wallet.non_specifie', 'Non spécifié') }}</span>
+          </div>
+          <div class="col-md-6 mt-2">
+            <span class="text-muted d-block x-small">{{ t('melodi_wallet.telephone', 'Téléphone :') }}</span>
+            <span class="text-dark">{{ owner_info.phone if (owner_info and owner_info.phone) else t('melodi_wallet.non_specifie', 'Non spécifié') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-5">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-body h-100 d-flex flex-column justify-content-between">
+        <div>
+          <h6 class="fw-bold mb-2 d-flex align-items-center gap-2">
+            <i class="fas fa-tools text-secondary"></i> {{ t('melodi_wallet.actions_administrateur', 'Actions Administrateur') }}
+          </h6>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button class="btn btn-sm btn-success flex-grow-1" data-bs-toggle="modal" data-bs-target="#depositModal">
+              <i class="fas fa-plus-circle me-1"></i> {{ t('melodi_wallet.approvisionner', '+ Approvisionner') }}
+            </button>
+            <button class="btn btn-sm btn-warning text-dark flex-grow-1" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+              <i class="fas fa-minus-circle me-1"></i> {{ t('melodi_wallet.retrait_debit', 'Retrait / Débit') }}
+            </button>
+            <button class="btn btn-sm btn-outline-primary flex-grow-1" data-bs-toggle="modal" data-bs-target="#statusModal">
+              <i class="fas fa-toggle-on me-1"></i> {{ t('melodi_wallet.statut', 'Statut') }}
+            </button>
+            <button class="btn btn-sm btn-outline-secondary flex-grow-1" data-bs-toggle="modal" data-bs-target="#pinModal">
+              <i class="fas fa-key me-1"></i> {{ t('melodi_wallet.code_pin', 'Code PIN') }}
+            </button>
+          </div>
+        </div>
+        <div class="mt-3 pt-2 border-top text-end">
+          <small class="text-muted x-small">Créé le {{ wallet.created_at }} | Pays : {{ wallet.country_code }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3">
+      <form method="GET" action="/admin/melodi_wallet/detail" class="row g-2 align-items-center">
+        <input type="hidden" name="id" value="{{ wallet.id }}">
+        <div class="col-md-3">
+          <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">{{ t('melodi_wallet.tous_les_types_d', '-- Tous les types d\'opérations --') }}</option>
+            <option value="deposit" {% if type_filter == 'deposit' %}selected{% endif %}>{{ t('melodi_wallet.depot', 'Dépôt') }}</option>
+            <option value="withdrawal" {% if type_filter == 'withdrawal' %}selected{% endif %}>{{ t('melodi_wallet.retrait', 'Retrait') }}</option>
+            <option value="transfer_out" {% if type_filter == 'transfer_out' %}selected{% endif %}>{{ t('melodi_wallet.transfert_emis', 'Transfert Émis') }}</option>
+            <option value="transfer_in" {% if type_filter == 'transfer_in' %}selected{% endif %}>{{ t('melodi_wallet.transfert_recu', 'Transfert Reçu') }}</option>
+            <option value="invoice_payment" {% if type_filter == 'invoice_payment' %}selected{% endif %}>{{ t('melodi_wallet.paiement_facture', 'Paiement Facture') }}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">{{ t('melodi_wallet.tous_les_statuts', '-- Tous les statuts --') }}</option>
+            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>{{ t('melodi_wallet.complete', 'Complété') }}</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>{{ t('melodi_wallet.en_attente', 'En attente') }}</option>
+            <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>{{ t('melodi_wallet.echoue', 'Échoué') }}</option>
+          </select>
+        </div>
+        <div class="col-md-2 ms-auto text-end">
+          <a href="/admin/melodi_wallet/detail?id={{ wallet.id }}" class="btn btn-sm btn-outline-secondary">{{ t('melodi_wallet.reinitialiser', 'Réinitialiser') }}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Ledger Transactions Table -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-0 pt-3 pb-2">
+      <h6 class="fw-bold mb-0">{{ t('melodi_wallet.historique_des_ecritures_comptables', 'Historique des Écritures Comptables (Grand Livre)') }}</h6>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 text-sm">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">{{ t('melodi_wallet.id_ref', 'ID / Ref') }}</th>
+              <th>{{ t('melodi_wallet.horodatage', 'Horodatage') }}</th>
+              <th>{{ t('melodi_wallet.type_d_operation', 'Type d\'Opération') }}</th>
+              <th>{{ t('melodi_wallet.sens', 'Sens') }}</th>
+              <th>{{ t('melodi_wallet.montant', 'Montant') }}</th>
+              <th>{{ t('melodi_wallet.devise', 'Devise') }}</th>
+              <th>{{ t('melodi_wallet.description', 'Description') }}</th>
+              <th>{{ t('melodi_wallet.operateur', 'Opérateur') }}</th>
+              <th class="pe-3">{{ t('melodi_wallet.statut', 'Statut') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tx in transactions %}
+            {% set dir = tx.direction.value if tx.direction.value is defined else tx.direction|string %}
+            {% set st = tx.status.value if tx.status.value is defined else tx.status|string %}
+            <tr>
+              <td class="ps-3 font-monospace fw-bold">#{{ tx.id }} <small class="text-muted d-block">{{ tx.reference }}</small></td>
+              <td><small class="text-muted">{{ tx.created_at }}</small></td>
+              <td><span class="badge bg-dark font-monospace">{{ tx.type }}</span></td>
+              <td>
+                {% if dir == 'credit' %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">{{ t('melodi_wallet.credit', 'CRÉDIT') }}</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{ t('melodi_wallet.debit', 'DÉBIT') }}</span>
+                {% endif %}
+              </td>
+              <td class="fw-bold font-monospace {% if dir == 'credit' %}text-success{% else %}text-danger{% endif %}">
+                {% if dir == 'credit' %}+{% else %}-{% endif %}{{ "%.2f"|format(tx.amount) }}
+              </td>
+              <td><span class="font-monospace text-muted">{{ tx.currency_code }}</span></td>
+              <td>{{ tx.description or '-' }}</td>
+              <td><small class="text-muted font-monospace">{{ tx.created_by or '-' }}</small></td>
+              <td class="pe-3">
+                {% if st == 'completed' %}
+                  <span class="badge bg-success">{{ t('melodi_wallet.complete', 'Complété') }}</span>
+                {% elif st == 'pending' %}
+                  <span class="badge bg-warning text-dark">{{ t('melodi_wallet.en_attente', 'En attente') }}</span>
+                {% else %}
+                  <span class="badge bg-danger">{{ st }}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="9" class="text-center py-5 text-muted">
+                <img src="/static_base_icons?name=list" style="width: 48px; height: 48px;" class="d-block mx-auto mb-2 opacity-50">
+                <p class="mb-0">{{ t('melodi_wallet.aucune_ecriture_comptable_dans', 'Aucune écriture comptable dans le grand livre.') }}</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Changer Statut -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content border-0 shadow">
+      <form method="POST" action="/admin/melodi_wallet/detail?id={{ wallet.id }}">
+        <input type="hidden" name="action_type" value="change_status">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">{{ t('melodi_wallet.modifier_le_statut', 'Modifier le Statut') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.statut_du_portefeuille', 'Statut du Portefeuille') }}</label>
+            <select name="status" class="form-select form-select-sm" required>
+              <option value="active" {% if wst == 'active' %}selected{% endif %}>{{ t('melodi_wallet.actif_fonctionnel', 'Actif (Fonctionnel)') }}</option>
+              <option value="suspended" {% if wst == 'suspended' %}selected{% endif %}>{{ t('melodi_wallet.suspendu_bloque_temporairement', 'Suspendu (Bloqué temporairement)') }}</option>
+              <option value="closed" {% if wst == 'closed' %}selected{% endif %}>{{ t('melodi_wallet.ferme_desactive', 'Fermé (Désactivé)') }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">{{ t('melodi_wallet.annuler', 'Annuler') }}</button>
+          <button type="submit" class="btn btn-primary btn-sm">{{ t('melodi_wallet.mettre_a_jour', 'Mettre à jour') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Dépôt -->
+<div class="modal fade" id="depositModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow">
+      <form method="POST" action="/admin/melodi_wallet/detail?id={{ wallet.id }}">
+        <input type="hidden" name="action_type" value="deposit">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">{{ t('melodi_wallet.approvisionner_le_portefeuille', 'Approvisionner le Portefeuille') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.montant_du_depot', 'Montant du Dépôt') }}</label>
+            <input type="number" step="0.01" name="amount" class="form-control form-control-sm" required placeholder="{{ t('melodi_wallet.ex_montant_50000', 'Ex: 50000') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.description_motif', 'Description / Motif') }}</label>
+            <input type="text" name="description" class="form-control form-control-sm" placeholder="Ex: Dépôt bancaire / Approvisionnement caisse">
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">{{ t('melodi_wallet.annuler', 'Annuler') }}</button>
+          <button type="submit" class="btn btn-success btn-sm">{{ t('melodi_wallet.valider_le_depot', 'Valider le Dépôt') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Retrait -->
+<div class="modal fade" id="withdrawModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow">
+      <form method="POST" action="/admin/melodi_wallet/detail?id={{ wallet.id }}">
+        <input type="hidden" name="action_type" value="withdraw">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">{{ t('melodi_wallet.demande_de_retrait_debit', 'Demande de Retrait / Débit') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.montant_du_retrait', 'Montant du Retrait') }}</label>
+            <input type="number" step="0.01" name="amount" class="form-control form-control-sm" required placeholder="{{ t('melodi_wallet.ex_montant_25000', 'Ex: 25000') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.code_pin_optionnel', 'Code PIN (optionnel)') }}</label>
+            <input type="password" name="pin" class="form-control form-control-sm" placeholder="{{ t('melodi_wallet.code_pin', 'Code PIN') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.description', 'Description') }}</label>
+            <input type="text" name="description" class="form-control form-control-sm" placeholder="Ex: Retrait client en agence">
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">{{ t('melodi_wallet.annuler', 'Annuler') }}</button>
+          <button type="submit" class="btn btn-warning text-dark btn-sm">{{ t('melodi_wallet.confirmer_le_retrait', 'Confirmer le Retrait') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal PIN -->
+<div class="modal fade" id="pinModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow">
+      <form method="POST" action="/admin/melodi_wallet/detail?id={{ wallet.id }}">
+        <input type="hidden" name="action_type" value="set_pin">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">{{ t('melodi_wallet.reinitialiser_le_code_pin', 'Réinitialiser le Code PIN') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">{{ t('melodi_wallet.nouveau_code_pin_de', 'Nouveau Code PIN de Sécurité (4 à 6 chiffres)') }}</label>
+            <input type="password" name="pin" class="form-control form-control-sm" required placeholder="{{ t('melodi_wallet.ex_pin_1234', 'Ex: 1234') }}">
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">{{ t('melodi_wallet.annuler', 'Annuler') }}</button>
+          <button type="submit" class="btn btn-dark btn-sm">{{ t('melodi_wallet.enregistrer_le_pin', 'Enregistrer le PIN') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
